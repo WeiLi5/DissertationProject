@@ -59,7 +59,6 @@ def save_image_in_actual_size(data_set,saving_folder):
 	plt.savefig(saving_folder + name)
 	plt.close()
 
-#reference:https://stackoverflow.com/questions/22685274/divide-an-image-into-5x5-blocks-in-python-and-compute-histogram-for-each-block
 def crop_image(data_set,saving_folder):
 	"""Crop an image into r*c blocks"""
 
@@ -99,11 +98,6 @@ def regrid_bayes_in(product):
 	rads = product.load_radiances()
 	regridder = Regrid(rads, flags)
 	flags_resized = regridder(flags)
-	print("------------")
-	plt.imshow(flags_resized['bayes_in'],cmap="gray")
-	plt.savefig("---------------------------"+ name)
-	#plt.show()
-
 	return flags_resized['bayes_in']
 
 	# #original mask
