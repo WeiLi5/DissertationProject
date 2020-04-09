@@ -27,6 +27,7 @@ def read_product():
 
 		#Read radiances and crop them into blocks
 		read_radiances(product,radiances_folder)
+		#regrid_radiances(product)
 
 		read_bayes(product,clouds_mask_folder)
 
@@ -69,8 +70,8 @@ def crop_image(data_set,saving_folder):
 	originImage = data_set
 
 	# Define the window size
-	windowsize_r = 600
-	windowsize_c = 600
+	windowsize_r = 256
+	windowsize_c = 256
 
 	# Crop out the window and calculate the histogram
 	for r in range(0,originImage.shape[0] - windowsize_r, windowsize_r):
@@ -91,6 +92,9 @@ def read_bayes(product,saving_folder):
 	"""Read bayes mask"""
 	bayes_mask = regrid_bayes_in(product)
 	crop_image(bayes_mask,saving_folder)
+	# flags = product.load_flags()
+	# bayes_mask = flags["bayes_in"]
+	# crop_image(bayes_mask,saving_folder)
 
 
 def regrid_bayes_in(product):
@@ -110,6 +114,18 @@ def regrid_bayes_in(product):
 	# plt.imshow(flags['bayes_in'],cmap="gray")
 	# plt.show()
 	# print(flags['bayes_in'].shape)
+
+def regrid_radiances(product):
+	#Seems this is wrong method and casue errors
+	flags = product.load_flags()
+	rads = product.load_radiances()
+	regridder = Regrid(flags,rads)
+	radiances_resized = regridder(rads)
+	plt.imshow(radiances_resized["S1_radiance_an"])
+	plt.show()
+
+	return radiances_resized
+
 
 def read_flags():
 	return true
