@@ -14,8 +14,10 @@
 ### Regrid bayes_in mask (3000*2400)
 ![regrid](/images/regrid_mask.png)
 
-## 3. Crop bayes_in mask (600*600)
-### Good image
+## 3. Crop bayes_in mask 
+### Good image (600*600)
 ![good mask](/images/good_mask.png)
-### Bad image
+### Bad image (600*600)
 ![bad mask](/images/bad_mask.png)
+### Also occurs in other window size (256*256)
+![bad 256 mask](/images/256x256.png)
