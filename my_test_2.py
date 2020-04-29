@@ -33,7 +33,8 @@ def read_product():
 		#Read a single product
 		product = ImageLoader(path_in_str)
 		#read_radiances(product)
-		read_bayes_in(product)
+		#read_bayes_in(product)
+		visualize_natural_color(product)
 
 
 def read_radiances(product):
@@ -119,11 +120,124 @@ def crop_image(input_folder,output_folder):
 			for c in range(0,image.size[1] - windowsize_c, windowsize_c):
 				cropped_image = image.crop((r,c,r+windowsize_r,c+windowsize_c)).convert("LA")
 				cropped_image.save(output_folder + str(r) + "_" + str(c) + "_" + path.name, "PNG", optimize=True)
+
+def remove_bw_images(A,B):
+	"""Remove the mask images with only black or white color
+	Also remove the correspond radiance images"""
+	paths = Path(A).glob('*')
+	for path in paths:	
+		image = Image.open(path)
+		if(image.convert("L").getextrema() == (0,0)):
+			print("black ++++: " + path.name)
+		elif(image.convert("L").getextrema() == (255,255)):
+			print("white ----: " + path.name)
+
+def visualize_natural_color_bi():
+	#reference: https://stackoverflow.com/questions/42872293/channel-mix-with-pillow
+	#read radiance channels
+
+	path = "data/S3A_SL_1_RBT____20200417T022539_20200417T022839_20200418T070654_0179_057_160_3060_LN2_O_NT_004.SEN3"
+	product = ImageLoader(path)
+	#read radiance
+	# rads = product.load_radiances()
+	# s1 = rads["S1_radiance_an"].values
+	# s3 = rads["S3_radiance_an"].values
+	# s5 = rads["S5_radiance_an"].values
+	refs = product.load_reflectances()
+	s1 = refs["S1_reflectance_an"].values
+	s3 = refs["S3_reflectance_an"].values
+	s5 = refs["S5_reflectance_an"].values
+
+
+	#----------test--------------
+	start_time = time.time()
+	row,col = s1.shape
+	s1 = s1[5:row-5,100:col-80]
+	#fill s1 NaNs
+	mask1 = numpy.isnan(s1)
+	f_s1 = inpaint.inpaint_biharmonic(s1,mask1)
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+	start_time = time.time()
+	s3 = s3[5:row-5,100:col-80]
+	#fill s3 NaNs
+	mask3 = numpy.isnan(s3)
+	f_s3 = inpaint.inpaint_biharmonic(s3,mask3)
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+	start_time = time.time()
+	s5 = s5[5:row-5,100:col-80]
+	#fill s5 NaNs
+	mask5 = numpy.isnan(s5)
+	f_s5 = inpaint.inpaint_biharmonic(s5,mask5)
+	print("--- %s seconds ---" % (time.time() - start_time))
+	#-----------------------------
+
+	# # Transform channel data
+	r, g, b = (f_s3 + f_s5) / 2, f_s3, (f_s3 + f_s1) / 2
+
+	# # Merge channels
+	out_data = numpy.stack((r, g, b), axis=2).astype('uint8')
+	out_img = Image.fromarray(out_data)
+	out_img.save("ReflectanceBi2.png","PNG", optimize=True)
+
+
+def visualize_natural_color_max():
+	#reference: https://stackoverflow.com/questions/42872293/channel-mix-with-pillow
+	#read radiance channels
+
+	path = "data/S3A_SL_1_RBT____20200417T022539_20200417T022839_20200418T070654_0179_057_160_3060_LN2_O_NT_004.SEN3"
+	product = ImageLoader(path)
+	# rads = product.load_radiances()
+	# s1 = rads["S1_radiance_an"].values
+	# s3 = rads["S3_radiance_an"].values
+	# s5 = rads["S5_radiance_an"].values
+	refs = product.load_reflectances()
+	s1 = refs["S1_reflectance_an"].values*255
+	s3 = refs["S3_reflectance_an"].values*255
+	s5 = refs["S5_reflectance_an"].values*255
+
+	#----------test--------------
+	start_time = time.time()
+	row,col = s1.shape
+	#s1 = s1[5:row-5,100:col-80]
+	#fill s1 NaNs
+	f_s1 = numpy.where(numpy.isnan(s1),s1[~numpy.isnan(s1)].max(),s1)
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+	start_time = time.time()
+	#s3 = s3[5:row-5,100:col-80]
+	#fill s3 NaNs
+	mask3 = numpy.isnan(s3)
+	f_s3 = numpy.where(numpy.isnan(s3),s3[~numpy.isnan(s3)].max(),s3)
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+	start_time = time.time()
+	#s5 = s5[5:row-5,100:col-80]
+	#fill s5 NaNs
+	mask5 = numpy.isnan(s5)
+	f_s5 = numpy.where(numpy.isnan(s5),s5[~numpy.isnan(s5)].max(),s5)
+	print("--- %s seconds ---" % (time.time() - start_time))
+	#-----------------------------
+
+	# Transform channel data
+	r, g, b = (f_s3 + f_s5) / 2, f_s3, (f_s3 + f_s1) / 2
+	# Merge channels
+	out_data = numpy.stack((r, g, b), axis=2).astype('uint8')
+	out_img = Image.fromarray(out_data)
+	out_img.save("reflectance_max.png","PNG", optimize=True)
+
+
+
+
 def main():
-	read_product()
-	resize_mask()
+	#read_product()
+	#resize_mask()
 	#crop_image("resize_mask","mask_cropped/")
 	#crop_image("original_radiance_S3","radiance_cropped_S3/")
+	#remove_bw_images("Radiance_S1/A/train","Radiance_S1/B/train")
+	# visualize_natural_color_bi()
+	visualize_natural_color_max()
 
 
 	
