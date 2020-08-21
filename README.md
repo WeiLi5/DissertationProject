@@ -2,6 +2,7 @@
 #### These two scripts are used for the dissertation project.
 -  slstr-preprocess.py is used for prepare a dataset.
 -  ImageClassify.py is used for analysing the results.
+-  Note* There are also some functions not provided through command line options. Such as generating ramdom shapes with corresponding masks, generating fake cloud masks, etc...
 
 
 #### slstr-preprocess.py
